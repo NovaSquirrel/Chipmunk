@@ -1,0 +1,1 @@
+iverilog -o chipmunk testbench.v chipmunk.v
