@@ -34,17 +34,17 @@ module testbench;
 		// Initialize Inputs
 		clk = 0;
 		reset = 0;
-		startPC = 0;
+		startPC = 512;
 
 		// Wait 100 ns for global reset to finish
         #100;
 		reset = 1;
-        #500;
-		$stop;
+		@(posedge cpu.done);
+		$finish;
  	end
 
 	initial
-		$monitor("At time %t, value = %h - state %d - datareg %h - BUS: %h A(%h), X(%h), Y(%h), PC(%h)", $time, dataBus, cpu.state, cpu.dataReg, addrBus, cpu.aReg, cpu.xReg, cpu.yReg, cpu.pcReg);
+		$monitor("At time %t, value = %h - state %d - datareg %h - BUS: %h A(%h), X(%h), Y(%h), PC(%h) %d%d%d ALU:%h", $time, dataBus, cpu.state, cpu.dataReg, addrBus, cpu.aReg, cpu.xReg, cpu.yReg, cpu.pcReg, cpu.zFlagReg, cpu.nFlagReg, cpu.cFlagReg, cpu.addSubResult);
       
 endmodule
 
@@ -52,23 +52,10 @@ module fakeROM (
 	 input [11:0] address,
 	 output reg [7:0] data
 	);
-	
+	reg [7:0] memory [3071:0];
+
 	always @* begin
-		if (address == 12'h000)
-			data = 8'h00;
-		else if (address == 12'h001)
-			data = 8'h08;
-		else if (address == 12'h002)
-			data = 8'h21;
-		else if (address == 12'h003)
-			data = 8'h05;
-		else if (address == 12'h004)
-			data = 8'h98;
-		else if (address == 12'h005)
-			data = 8'h83;
-		else if (address == 12'h006)
-			data = 8'h83;
-		else
-			data = 8'h83; // halt
+		data = memory[address];
 	end
+	initial $readmemh("test.hex", memory);
 endmodule

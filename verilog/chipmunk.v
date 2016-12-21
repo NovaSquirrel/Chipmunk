@@ -68,10 +68,10 @@ module chipmunk
 	wire OpIndexY        = opcode[5:1] == 5'b10100; // lda memory,y and sta memory,y
 	wire OpSetCarryFlag  = opcode[5:1] == 5'b00011;
 	wire OpUseAdder      = opcode[5:3] == 3'b001;
-	wire OpUseBitOp      = opcode[5:3] == 3'b010;
+	wire OpUseBitOp      = opcode[5:2] == 4'b0100;
 	wire OpUseShifter    = opcode[5:2] == 4'b0110;
 
-	wire OpAdderUseCarry = opcode[3:2] == 2'b11;
+	wire OpAdderUseCarry = opcode[5:2] == 4'b0011;
 	wire OpCpx           = opcode[5:1] == 5'b01011;
 	wire OpCpy           = opcode == 6'b011100;
 	wire OpDoCompare     = opcode[5:2] == 4'b0101 || OpCpy;
@@ -83,6 +83,7 @@ module chipmunk
 	wire aluUseY         = OpCpy || OpInyDey;
 
 	wire OpReadMemory    = opcode[0] && !opcode[5] && opcode != 6'b000111; // not SEC but everything else with this pattern
+	wire OpReadMemory2   = dataBus[2] && !dataBus[7] && dataBus[7:2] != 6'b000111; // dataBus version
 
 	wire OpBranch        = opcode[5:3] == 3'b111; //last 8 opcodes are branches
 	wire flagsMatch      = (!opcode[2] && (!opcode[1] || (opcode[0] == nFlagReg)))    // BRA/BSR, or BPL/BMI
@@ -93,9 +94,9 @@ module chipmunk
 	// -- set the finished bit to 1 when you try to RTS with a full stack
 	always @(posedge clk or negedge reset) begin
 		if (!reset)
-			finished = 0;
+			finished <= 0;
 		else if(state == `sFetchInstruction && dataBus == 8'h83) // NOP absolute,x is halt
-			finished = 1;
+			finished <= 1;
 	end
 
 	// -- advance the current state to the next state
@@ -123,10 +124,10 @@ module chipmunk
 			eaReg[7:0] <= dataBus;
 		end else if(state == `sFetchParameterHi) // load high byte of address
 			eaReg[addrSize-1:8] <= dataBus;			
-		else if (state == `sIndexWithX) // index with X
-			eaReg <= eaReg + xReg;
-		else if (state == `sIndexWithY) // index with Y
-			eaReg <= eaReg + yReg;
+		else if(state == `sReadParameterMemory)
+			dataReg <= dataBus;
+		else if (state == `sIndexWithX || state == `sIndexWithY) // index with X
+			eaReg <= eaReg + ((state == `sIndexWithY) ? yReg : xReg);
 		else if (state == `sCalcRelativeBranch) // relative branch, sign extend branch distance and add it to PC
 			eaReg <= {{8{dataReg[7]}}, dataReg[7:0]} + pcReg;
 		else if (state == `sPointerGet1) // get low byte of pointer
@@ -166,10 +167,10 @@ module chipmunk
 	assign bitOperationResult = opcode[1] ? (aReg ^ dataReg) : ~(aReg | dataReg);
 
 	wire [7:0] shifterLeft = opcode[0] ? dataReg : aReg;
-	assign shifterResult = opcode[2] ? // shift left or shift right?
+	assign shifterResult = opcode[1] ? // shift left or shift right?
 			(shifterLeft >> 1) | ((opcode[0] && cFlagReg) ? 8'b10000000 : 8'b00000000) // memory uses rotates
 			:(shifterLeft << 1) | ((opcode[0] && cFlagReg) ? 8'b00000001 : 8'b00000000);
-	assign shifterCarry = opcode[2] ? shifterLeft[0] : shifterLeft[7];
+	assign shifterCarry = opcode[1] ? shifterLeft[0] : shifterLeft[7];
 
 	// -- A (accumulator) register
 	always @(posedge clk) begin
@@ -217,10 +218,10 @@ module chipmunk
 		if (state == `sDoInstruction) begin
 			if (opcode[5:1] == 5'b00011) // CLC, SEC
 				cFlagReg <= opcode[0];
-			else if (OpUseAdder || OpIncDec || OpInxDex || OpInyDey || OpIncDecMem) begin // add/subtract and increments/decrements all use the adder
+			else if (OpUseAdder || OpDoCompare || OpIncDec || OpInxDex || OpInyDey || OpIncDecMem) begin // add/subtract and increments/decrements all use the adder
 				nFlagReg <= addSubResult[7];
 				zFlagReg <= (addSubResult == 8'b00000000) ? 1 : 0;
-				if (OpUseAdder) // increment/decrement doesn't affect carry
+				if (OpUseAdder || OpDoCompare) // increment/decrement doesn't affect carry
 					cFlagReg <= addSubCarryOut;
 			end else if(OpUseBitOp) begin
 				nFlagReg <= bitOperationResult[7];
@@ -310,7 +311,7 @@ module chipmunk
 				nextState = (dataBus[7:5] == 3'b110 && dataBus[0]) ? `sPushByte : 
 					(dataBus[7:5] == 3'b110 && !dataBus[0]) ? `sPullByte :
 					(dataBus[0] || dataBus[1]) ? `sFetchParameterLo :
-					(OpReadMemory ? `sReadParameterMemory : `sDoInstruction);
+					(OpReadMemory2 ? `sReadParameterMemory : `sDoInstruction);
 			`sFetchParameterLo:
 				nextState = parameter_size[1] ? `sFetchParameterHi :  // keep getting parameter bytes if there's more
 				           (OpReadMemory ? `sReadParameterMemory :    // read memory

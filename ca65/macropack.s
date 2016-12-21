@@ -1,4 +1,4 @@
-.setcpu "none"
+.feature ubiquitous_idents ;.setcpu "none"
 .feature addrsize
 
 PARAM_NONE   = %00
@@ -121,12 +121,13 @@ PARAM_16BITX = %11
 .endmacro
 
 .macro cpy value
-  .assert .match (.left (1, {value}), #), error, "CPY only supports constants"
+  .assert (.match (.left (1, {value}), #)), error, "CPY only supports constants"
+
   .local @argvalue
-  .if (.tcount(mem) = 1)
+  .if (.tcount(value) = 1)
     .byt ($1c << 2) | PARAM_NONE
   .else
-    @argvalue = .right(.tcount({value})-1, {arg})
+    @argvalue = .right(.tcount(value)-1, arg)
     .byt ($1c << 2) | PARAM_8BIT, @argvalue
   .endif
 .endmacro
@@ -180,31 +181,31 @@ PARAM_16BITX = %11
 .endmacro
 
 .macro adx value
-  .assert .match (.left (1, {value}), #)), error, "ADY only supports constants"
+  .assert (.match (.left (1, {value}), #)), error, "ADY only supports constants"
   .local @argvalue
-  @argvalue = .right(.tcount({value})-1, {arg})
-  .byt ($2C << 2) | PARAMETER_8BIT, value
+  @argvalue = .right(.tcount(value)-1, value)
+  .byt ($2C << 2) | PARAM_8BIT, @argvalue
 .endmacro
 
 .macro sbx value
-  .assert .match (.left (1, {value}), #)), error, "SBX only supports constants"
+  .assert (.match (.left (1, {value}), #)), error, "SBX only supports constants"
   .local @argvalue
-  @argvalue = .right(.tcount({value})-1, {arg})
-  .byt ($2D << 2) | PARAMETER_8BIT, value
+  @argvalue = .right(.tcount(value)-1, value)
+  .byt ($2D << 2) | PARAM_8BIT, @argvalue
 .endmacro
 
 .macro ady value
-  .assert .match (.left (1, {value}), #)), error, "ADY only supports constants"
+  .assert (.match (.left (1, {value}), #)), error, "ADY only supports constants"
   .local @argvalue
-  @argvalue = .right(.tcount({value})-1, {arg})
-  .byt ($2E << 2) | PARAMETER_8BIT, value
+  @argvalue = .right(.tcount(value)-1, value)
+  .byt ($2E << 2) | PARAM_8BIT, @argvalue
 .endmacro
 
 .macro sby value
-  .assert .match (.left (1, {value}), #)), error, "SBY only supports constants"
+  .assert (.match (.left (1, {value}), #)), error, "SBY only supports constants"
   .local @argvalue
-  @argvalue = .right(.tcount({value})-1, {arg})
-  .byt ($2F << 2) | PARAMETER_8BIT, value
+  @argvalue = .right(.tcount(value)-1, value)
+  .byt ($2F << 2) | PARAM_8BIT, @argvalue
 .endmacro
 
 .macro nop
@@ -344,19 +345,19 @@ PARAM_16BITX = %11
   .byt ($39 << 2) | PARAM_16BIT, <destination, >destination
 .endmacro
 
-.macro jeq destination
+.macro jpl destination
   .byt ($3A << 2) | PARAM_16BIT, <destination, >destination
 .endmacro
 
-.macro jne destination
+.macro jmi destination
   .byt ($3B << 2) | PARAM_16BIT, <destination, >destination
 .endmacro
 
-.macro jpl destination
+.macro jne destination
   .byt ($3C << 2) | PARAM_16BIT, <destination, >destination
 .endmacro
 
-.macro jmi destination
+.macro jeq destination
   .byt ($3D << 2) | PARAM_16BIT, <destination, >destination
 .endmacro
 

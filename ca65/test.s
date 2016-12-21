@@ -1,13 +1,19 @@
 .include "macropack.s"
 .code
-lda #
-ldx #
-add #5
-swapax
-halt
-;lda #5
-;ldx #
-;swapax
-;add #5
-;inx
-;halt
+
+  lda #
+  lda 0
+  ina
+  ina
+  ina
+
+;: eor array,x
+;  nop
+;  inx
+;  cpx #3
+;  jne :-
+
+  halt
+
+array:
+  .byt 1, 2, 4
