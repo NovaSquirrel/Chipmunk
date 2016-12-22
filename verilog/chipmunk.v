@@ -303,10 +303,11 @@ module chipmunk
 	always @* begin		
 		case (state)
 			`sFetchInstruction:
-				nextState = (dataBus[7:5] == 3'b110 && !dataBus[2]) ? `sPushByte : 
+				nextState = (dataBus[7:2] == 6'b100111) ? `sReturn1 :
+					((dataBus[7:5] == 3'b110 && !dataBus[2]) ? `sPushByte : 
 					((dataBus[7:5] == 3'b110 && dataBus[2]) ? `sPullByte :
 					(dataBus[0] || dataBus[1]) ? `sFetchParameterLo :
-					(OpReadMemory2 ? `sReadParameterMemory : `sDoInstruction));
+					(OpReadMemory2 ? `sReadParameterMemory : `sDoInstruction)));
 			`sFetchParameterLo:
 				nextState = parameter_size[1] ? `sFetchParameterHi :  // keep getting parameter bytes if there's more
 				           (OpReadMemory ? `sReadParameterMemory :    // read memory
