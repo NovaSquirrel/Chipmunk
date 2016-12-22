@@ -54,7 +54,7 @@ module chipmunk
 	wire OpLoadA		= opcode[5:1] == 5'b00000;
 	wire OpLoadX		= opcode[5:1] == 5'b00001;
 	wire OpLoadY		= opcode[5:1] == 5'b00010;
-	wire OpIncDecMem	= opcode[5:3] == 4'b0111 && opcode[0];
+	wire OpIncDecMem	= opcode[5:2] == 4'b0111 && opcode[0];
 	wire OpRolRorMem	= (opcode == 6'b011001 || opcode == 6'b011011);
 	wire OpIncDec		= opcode[5:1] == 5'b10101;
 	wire OpInxDex		= opcode[5:1] == 5'b10110;
@@ -78,6 +78,7 @@ module chipmunk
 	                         (opcode[5:1] == 5'b00101) ||          // SUB
 	                         (opcode[5:1] == 5'b00111) ||          // SBC
 	                         (opcode[5:3] == 3'b101 && opcode[0]); // decrements 
+							// note that memory DEC is absent from here
 	wire aluUseX         = OpCpx || OpInxDex;
 	wire aluUseY         = OpCpy || OpInyDey;
 
@@ -124,7 +125,7 @@ module chipmunk
 		end else if(state == `sFetchParameterHi) // load high byte of address
 			eaReg[addrSize-1:8] <= dataBus;			
 		else if(state == `sReadParameterMemory)
-			dataReg <= dataBus;
+			dataReg <= dataBus + (OpIncDecMem ? (opcode[1] ? 8'hff : 8'h01): 0);
 		else if (state == `sIndexWithX || state == `sIndexWithY) // index with X
 			eaReg <= eaReg + ((state == `sIndexWithY) ? yReg : xReg);
 		else if (state == `sCalcRelativeBranch) // relative branch, sign extend branch distance and add it to PC
@@ -153,7 +154,7 @@ module chipmunk
 	end
 
 	// -- Adder/subtractor
-	wire [7:0] aluLeft = aluUseX ? xReg : (aluUseY ? yReg : aReg);
+	wire [7:0] aluLeft = aluUseX ? xReg : (aluUseY ? yReg : (OpIncDecMem ? 8'h00 : aReg));
 	assign { addSubCarryOut, addSubResult } = 
 		OpAdderUseCarry ? (OpSubtractInstead ? // carry
 			aluLeft + {1'b0, ~dataReg[7:0]} + cFlagReg
@@ -326,8 +327,10 @@ module chipmunk
 				nextState = OpReadMemory ? `sReadParameterMemory : `sDoInstruction;
 			`sReadParameterMemory, `sCalcRelativeBranch:              // done doing any additional preparation, start the actual instruction effect
 				nextState = `sDoInstruction;
-			`sDoInstruction, `sPushByte, `sPullByte, `sCall2, `sReturn2:
+			`sDoInstruction:
 				nextState = (BranchTaken && opcode[2:0] == 3'b001) ? `sCall1 : `sFetchInstruction; // start a pushing the old program counter if needed
+			`sCall2, `sReturn2, `sPullByte, `sPushByte:
+				nextState = `sFetchInstruction;
 			`sIndexWithY:
 				nextState = OpLdaY ? `sReadParameterMemory : `sDoInstruction;
 			`sReturn1:

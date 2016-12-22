@@ -313,28 +313,43 @@ PARAM_16BITX = %11
   nor mem, index
 .endmacro
 
+.macro BranchInstruction opcode, target
+  .local @distance
+  @distance = (target) - (* + 2)
+  .assert @distance >= -128 && @distance <= 127, error, "branch out of range"
+  .byte (opcode<<2) | PARAM_8BIT, <@distance
+.endmacro
+
 .macro bra destination
+  BranchInstruction $38, destination
 .endmacro
 
 .macro bsr destination
+  BranchInstruction $39, destination
 .endmacro
 
 .macro beq destination
+  BranchInstruction $3d, destination
 .endmacro
 
 .macro bne destination
+  BranchInstruction $3c, destination
 .endmacro
 
 .macro bpl destination
+  BranchInstruction $3a, destination
 .endmacro
 
 .macro bmi destination
+  BranchInstruction $3b, destination
 .endmacro
 
 .macro bcc destination
+  BranchInstruction $3e, destination
 .endmacro
 
 .macro bcs destination
+  BranchInstruction $3f, destination
 .endmacro
 
 .macro jmp destination

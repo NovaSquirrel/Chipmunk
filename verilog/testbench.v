@@ -74,7 +74,7 @@ module fakeROM (
 	always @(posedge write) begin
 		if (clock) begin
 			mem[addressDelayed] = dataDelayed;
-			//$display("writing %h to %h", dataDelayed, addressDelayed);
+			$display("wrote %h to %h", dataDelayed, addressDelayed);
 		end
 	end
 
