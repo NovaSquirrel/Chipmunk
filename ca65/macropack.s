@@ -315,6 +315,14 @@ PARAM_16BITX = %11
   nor mem, index
 .endmacro
 
+.macro and mem
+  .assert (.match (.left (1, {value}), #)), error, "AND only supports constants"
+
+  .local @argvalue
+  @argvalue = .right(.tcount(value)-1, arg)
+  bic #<~mem
+.endmacro
+
 .macro BranchInstruction opcode, target
   .local @distance
   @distance = (target) - (* + 2)

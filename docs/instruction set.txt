@@ -1,0 +1,395 @@
+-------- REGISTERS --------
+A - accumulator, 8-bit
+X - index, 8-bit
+Y - index, 8-bit
+SP - stack pointer, 6-bit
+PC - program counter
+F - flags: carry, negative, zero
+
+-------- ADDRESSING MODES --------
+Cycle times are for reads, subtract 1 for writes
+
+OP
+Address is the first byte of RAM
++1 cycle
++0 bytes
+
+OP #
+Zero constant.
++0 cycles
++0 bytes
+
+OP #constant
+An 8-bit constant
++1 cycle
++1 byte
+
+OP zeropage
+Address is 8-bit.
++2 cycles
++1 byte
+
+OP absolute
+Address is 16-bit.
++3 cycles
++2 bytes
+
+OP absolute,x
+Address is a 16-bit base address plus the X register.
+No page crossing penalty.
++4 cycles
++2 bytes
+
+OP absolute,y
+Address is a 16-bit base address plus the X register.
+No page crossing penalty.
++4 cycles
++2 bytes
+
+OP relative
+Branch target, -128 bytes back to 127 bytes forward.
+No page crossing penalty.
++2 cycles
++1 byte
+
+OP pointer
+Same as 6502's (zeropage),y addressing mode
+No page crossing penalty.
++5 cycles
++1 byte
+
+-------- INSTRUCTIONS --------
+LDA
+LDA #
+LDA #constant
+LDA zeropage
+LDA absolute
+LDA absolute,x
+LDA absolute,y
+LDAP pointer
+Load the accumulator with a new value
+Flags: NZ
+
+LDX
+LDX #
+LDX #constant
+LDX zeropage
+LDX absolute
+LDX absolute,x
+Load the X register with a new value
+Flags: NZ
+
+LDY
+LDY #
+LDY #constant
+LDY zeropage
+LDY absolute
+LDY absolute,x
+Load the Y register with a new value
+Flags: NZ
+
+STA
+STA zeropage
+STA absolute
+STA absolute,x
+STA absolute,y
+STAP pointer
+Store the accumulator to memory
+
+STX
+STX zeropage
+STX absolute
+STX absolute,x
+Store the X register to memory
+
+STY
+STY zeropage
+STY absolute
+STY absolute,x
+Store the Y register to memory
+
+CLC
+Clear the carry flag
+Flags: C
+
+SEC
+Set the carry flag
+Flags: C
+
+ADD
+ADD #
+ADD #constant
+ADD zeropage
+ADD absolute
+ADD absolute,x
+Accumulator += value
+Flags: CNZ
+
+SUB
+SUB #
+SUB #constant
+SUB zeropage
+SUB absolute
+SUB absolute,x
+Accumulator -= value
+Flags: CNZ
+
+ADC
+ADC #
+ADC #constant
+ADC zeropage
+ADC absolute
+ADC absolute,x
+Accumulator = accumulator + value + carry
+Flags: CNZ
+
+SBC
+SBC #
+SBC #constant
+SBC zeropage
+SBC absolute
+SBC absolute,x
+Accumulator = accumulator - value - !carry
+Flags: CNZ
+
+NOR
+NOR #
+NOR #constant
+NOR zeropage
+NOR absolute
+NOR absolute,x
+Accumulator = ~(accumulator | value)
+Flags: NZ
+
+ORA
+ORA #
+ORA #constant
+ORA zeropage
+ORA absolute
+ORA absolute,x
+Accumulator = accumulator | value
+Actually a macro, +1 byte
+Flags: NZ
+
+AND #constant
+Accumulator = accumulator & value
+Actually a macro, +1 byte
+Flags: NZ
+
+BIC
+BIC #
+BIC #constant
+BIC zeropage
+BIC absolute
+BIC absolute,x
+Accumulator = accumulator & ~value
+Actually a macro, +1 byte
+Flags: NZ
+
+EOR
+EOR #
+EOR #constant
+EOR zeropage
+EOR absolute
+EOR absolute,x
+Accumulator = accumulator ^ value
+Flags: NZ
+
+CMP
+CMP #
+CMP #constant
+CMP zeropage
+CMP absolute
+CMP absolute,x
+Compare accumulator with a value, set flags
+Flags: CNZ
+
+CPX
+CPX #
+CPX #constant
+CPX zeropage
+CPX absolute
+CPX absolute,x
+Compare X with a value, set flags
+Flags: CNZ
+
+CPY #
+CPY #constant
+Compare Y with a value, set flags
+Flags: CNZ
+
+NOT
+Accumulator = ~accumlator
+Flags: NZ
+
+NEG
+Accumulator = -accumulator
+Actually a macro, +1 byte
+Flags: NZ
+
+ASL
+Accumulator = accumulator << 1
+Flags: CNZ
+
+LSR
+Accumulator = accumulator >> 1
+Flags: CNZ
+
+ROL
+ROL zeropage
+ROL absolute
+ROL absolute,x
+Memory = memory << 1, and carry is shifted in as least significant bit
+Flags: CNZ
+
+ROR
+ROR zeropage
+ROR absolute
+ROR absolute,x
+Memory = memory >> 1, and carry is shifted in as most significant bit
+Flags: CNZ
+
+INC
+INC zeropage
+INC absolute
+INC absolute,x
+Memory = memory + 1
+Flags: NZ
+
+DEC
+DEC zeropage
+DEC absolute
+DEC absolute,x
+Memory = memory - 1
+Flags: NZ
+
+NOP
+Do nothing
+
+TAX
+X register = Accumulator
+
+TXA
+Accumulator = X register
+
+TAY
+Y register = Accumulator
+Actually a macro, +1 byte
+
+TYA
+Accumulator = Y register
+Actually a macro, +1 byte
+
+TXY
+Y register = X register
+Actually a macro, +1 byte
+
+TYX
+X register = Y register
+Actually a macro, +1 byte
+
+SWAPAX
+Swap Accumulator's value with X register's
+
+SWAPAY
+Swap Accumulator's value with Y register's
+Actually a macro, +1 byte
+
+SWAPXY
+Swap X register's value with Y register's
+Actually a macro, +1 byte
+
+INA
+Accumulator = accumulator + 1
+Flags: NZ
+
+DEA
+Accumulator = accumulator - 1
+Flags: NZ
+
+INX
+X register = X register + 1
+Flags: NZ
+
+DEX
+X register = X register - 1
+Flags: NZ
+
+ADX #constant
+X register = X register + constant
+Flags: NZ
+
+SBX #constant
+X register = X register - constant
+Flags: NZ
+
+ADY #constant
+Y register = Y register + constant
+Flags: NZ
+
+SBY #constant
+Y register = Y register - constant
+Flags: NZ
+
+PHP
+Push processor flags onto the stack
+
+PLP
+Pull processor flags from the stack
+Flags: CNZ
+
+PHA
+Push accumulator onto the stack
+
+PLA
+Restore accumulator from the stack
+
+PHX
+Push X register onto the stack
+
+PLX
+Pull X register from the stack
+
+PHY
+Push Y register onto the stack
+
+PLY
+Pull Y register from the stack
+
+BRA relative
+JMP absolute
+Jump to new location
+
+BNE relative
+JNE absolute
+Jump to new location if zero flag unset
+
+BEQ relative
+JEQ absolute
+Jump to new location if zero flag set
+
+BPL relative
+JPL absolute
+Jump to new location if negative flag unset
+
+BMI relative
+JMI absolute
+Jump to new location if negative flag set
+
+BCC relative
+JCC absolute
+Jump to new location if carry flag unset
+
+BCS relative
+JCS absolute
+Jump to new location if carry flag set
+
+BSR relative
+JSR absolute
+Call a subroutine
+
+RTS
+Return from a subroutine
+
+HALT
+Stop execution

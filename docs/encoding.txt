@@ -1,0 +1,84 @@
+-------- REGISTERS --------
+A - accumulator, 8-bit
+X - index, 8-bit
+SP - stack pointer
+PC - program counter
+F - flags: carry, negative
+
+-------- OPCODE FORMAT --------
+ffffff00                   - zero
+ffffff01 nnnnnnnn          - zeropage (or immediate)
+ffffff10 nnnnnnnn nnnnnnnn - absolute
+ffffff11 nnnnnnnn nnnnnnnn - absolute,x
+
+Before an opcode is excuted, the bottom two bits are looked at to determine how many bytes to read,
+and this is put into a buffer. This buffer may be interpreted by the instruction as a constant value or a memory address.
+Branch opcodes interpret 8-bit values as relative, and 16-bit values as absolute.
+The "zero" addressing mode gives easy access to the first byte of memory.
+
+f = function, from list below:
+
+000000 00 LDA constant
+000001 01 LDA memory
+000010 02 LDX constant
+000011 03 LDX memory 
+000100 04 LDY constant
+000101 05 LDY memory
+000110 06 CLC
+000111 07 SEC
+001000 08 ADD constant
+001001 09 ADD memory
+001010 0A SUB constant
+001011 0B SUB memory
+001100 0C ADC constant
+001101 0D ADC memory
+001110 0E SBC constant
+001111 0F SBC memory
+010000 10 NOR constant
+010001 11 NOR memory
+010010 12 EOR constant
+010011 13 EOR memory
+010100 14 CMP constant
+010101 15 CMP memory
+010110 16 CPX constant
+010111 17 CPX memory
+011000 18 ASL
+011001 19 ROL memory
+011010 1A LSR
+011011 1B ROR memory
+011100 1C CPY constant
+011101 1D INC memory
+011110 1E Unused
+011111 1F DEC memory
+100000 20 NOP
+100001 21 STA memory
+100010 22 TAX
+100011 23 STX memory
+100100 24 TXA
+100101 25 STY memory
+100110 26 SWAPAX
+100111 27 RTS
+101000 28 LDA memory,y
+101001 29 STA memory,y
+101010 2A INA
+101011 2B DEA
+101100 2C INX
+101101 2D DEX
+101110 2E INY
+101111 2F DEY
+110000 30 PHP
+110001 31 PLP
+110010 32 PHA
+110011 33 PLA
+110100 34 PHX
+110101 35 PLX
+110110 36 PHY
+110111 37 PLY
+111000 38 BRA relative
+111001 39 BSR relative
+111010 3A BPL relative
+111011 3B BMI relative
+111100 3C BNE relative
+111101 3D BEQ relative
+111110 3E BCC relative
+111111 3F BCS relative
