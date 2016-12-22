@@ -49,7 +49,6 @@ module chipmunk
 	wire addSubCarryOut;
 	wire [7:0] shifterResult;      // shifts the accumulator or dataReg one bit left/right
 	wire shifterCarry;
-
 	wire [7:0] bitOperationResult; // XOR and NOR
 
 	wire OpLoadA		= opcode[5:1] == 5'b00000;
@@ -143,7 +142,7 @@ module chipmunk
 			spReg <= 6'b111111;
 		else if (state == `sReturn1 ||
 		        (state == `sFetchInstruction &&
-					((dataBus[7:4] == 4'b1100 && dataBus[0]) // pla, plx, ply, plp
+					((dataBus[7:5] == 3'b110 && dataBus[2]) // pla, plx, ply, plp
 					|| (dataBus[7:2] == 6'b100111)) // rts
 				))
 			spReg <= spReg + 1'b1;
@@ -258,10 +257,10 @@ module chipmunk
 	// -- address output
 	always @* begin
 		case (state)
-			`sReadParameterMemory: // read a byte from memory
+			`sReadParameterMemory, `sDoInstruction: // read or write a byte from memory
 				addrBus <= eaReg;
 			`sPushByte, `sPullByte, `sCall1, `sCall2, `sReturn1, `sReturn2: 
-				addrBus <= { {(addrSize-9){1'b0}}, 1'b0, 1'b0, 1'b0, spReg }; // stack goes in $01xx
+				addrBus <= { {(addrSize-9){1'b0}}, 1'b1, 1'b1, 1'b1, spReg }; // stack goes in $01xx
 			`sFetchInstruction, `sFetchParameterLo, `sFetchParameterHi: // read parameter parts
 				addrBus <= pcReg;
 			`sPointerGet1:
@@ -301,17 +300,17 @@ module chipmunk
 	wire writeCycle =  ((state == `sDoInstruction && (OpSta || OpStx || OpSty || OpStaY || OpIncDecMem || OpRolRorMem)) || state == `sPushByte || state == `sCall1 || state == `sCall2);
  
 	assign weMem = !(writeCycle & !clk); // only assert we during 2nd half of the clock cycle
-	assign dataBusWrite = !weMem ? dataBusOutput : 8'bzzzzzzzz;
+	assign dataBusWrite = dataBusOutput; //!weMem ? dataBusOutput : 8'bzzzzzzzz;
 	assign done = finished;
 
 	// -- control logic: state machine
 	always @* begin		
 		case (state)
 			`sFetchInstruction:
-				nextState = (dataBus[7:5] == 3'b110 && dataBus[0]) ? `sPushByte : 
-					(dataBus[7:5] == 3'b110 && !dataBus[0]) ? `sPullByte :
+				nextState = (dataBus[7:5] == 3'b110 && !dataBus[2]) ? `sPushByte : 
+					((dataBus[7:5] == 3'b110 && dataBus[2]) ? `sPullByte :
 					(dataBus[0] || dataBus[1]) ? `sFetchParameterLo :
-					(OpReadMemory2 ? `sReadParameterMemory : `sDoInstruction);
+					(OpReadMemory2 ? `sReadParameterMemory : `sDoInstruction));
 			`sFetchParameterLo:
 				nextState = parameter_size[1] ? `sFetchParameterHi :  // keep getting parameter bytes if there's more
 				           (OpReadMemory ? `sReadParameterMemory :    // read memory

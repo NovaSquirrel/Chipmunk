@@ -1,3 +1,5 @@
 verilog/chipmunk
 *.o
 *.exe
+*.dat
+*.hex
