@@ -1,4 +1,4 @@
-.feature ubiquitous_idents ;.setcpu "none"
+.feature ubiquitous_idents
 .feature addrsize
 
 PARAM_NONE   = %00
@@ -73,10 +73,12 @@ PARAM_16BITX = %11
 .endmacro
 
 .macro ldap mem
+  ; no support for the zero parameter
   .byt ($28 << 2) | PARAM_8BIT, mem
 .endmacro
 
 .macro stap mem
+  ; no support for the zero parameter
   .byt ($29 << 2) | PARAM_8BIT, mem
 .endmacro
 

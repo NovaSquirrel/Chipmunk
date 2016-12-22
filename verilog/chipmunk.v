@@ -74,15 +74,14 @@ module chipmunk
 	wire OpCpx           = opcode[5:1] == 5'b01011;
 	wire OpCpy           = opcode == 6'b011100;
 	wire OpDoCompare     = opcode[5:2] == 4'b0101 || OpCpy;
-	wire OpSubtractInstead = OpDoCompare ||                        // compares
-	                         (opcode[5:1] == 5'b00101) ||          // SUB
-	                         (opcode[5:1] == 5'b00111) ||          // SBC
-	                         (opcode[5:3] == 3'b101 && opcode[0]); // decrements 
+	wire OpSubtractInstead = OpDoCompare ||                          // compares
+	                         (opcode[5:3] == 3'b001 && opcode[1]) || // SUB or SBC
+	                         (opcode[5:3] == 3'b101 && opcode[0]);   // decrements 
 							// note that memory DEC is absent from here
 	wire aluUseX         = OpCpx || OpInxDex;
 	wire aluUseY         = OpCpy || OpInyDey;
 
-	wire OpReadMemory    = opcode[0] && !opcode[5] && opcode != 6'b000111; // not SEC but everything else with this pattern
+	reg OpReadMemory;
 	wire OpReadMemory2   = dataBus[2] && !dataBus[7] && dataBus[7:2] != 6'b000111; // dataBus version
 
 	wire OpBranch        = opcode[5:3] == 3'b111; //last 8 opcodes are branches
@@ -114,17 +113,15 @@ module chipmunk
 			opcode <= dataBus[7:2];
 			parameter_size <= dataBus[1:0];
 			eaReg <= 0;   // address register is zero
-			if(dataBus[7:3] == 5'b10101 || dataBus[7:3] == 5'b10110 || dataBus[7:3] == 5'b10111 || (dataBus[7:4] == 4'b0111 && dataBus[0]))
-				// (in order: INC/DEC A, INX/DEX, INY/DEY, INC/DEC memory)
-				dataReg <= 1; // data register is 1, for incrementing/decrementing
-			else
-				dataReg <= 0; // data register is zero
+			OpReadMemory <= OpReadMemory2;
+			// (in order: INC/DEC A, INX/DEX, INY/DEY)
+			dataReg <= (dataBus[7:3] == 5'b10101 || dataBus[7:3] == 5'b10110 || dataBus[7:3] == 5'b10111);
 		end else if(state == `sFetchParameterLo) begin // load data register and low byte of address simultaneously
 			dataReg <= dataBus;
 			eaReg[7:0] <= dataBus;
-		end else if(state == `sFetchParameterHi) // load high byte of address
-			eaReg[addrSize-1:8] <= dataBus;			
-		else if(state == `sReadParameterMemory)
+		end else if(state == `sFetchParameterHi || state == `sPointerGet2) // load high byte of address
+			eaReg[addrSize-1:8] <= dataBus;
+		else if(state == `sReadParameterMemory) // inc/dec memory do the increment/decrement while loading
 			dataReg <= dataBus + (OpIncDecMem ? (opcode[1] ? 8'hff : 8'h01): 0);
 		else if (state == `sIndexWithX || state == `sIndexWithY) // index with X
 			eaReg <= eaReg + ((state == `sIndexWithY) ? yReg : xReg);
@@ -132,8 +129,6 @@ module chipmunk
 			eaReg <= {{8{dataReg[7]}}, dataReg[7:0]} + pcReg;
 		else if (state == `sPointerGet1) // get low byte of pointer
 			eaReg[7:0] <= dataBus;
-		else if (state == `sPointerGet2) // get high byte of pointer
-			eaReg[addrSize-1:8] <= dataBus;
 	end
 
 	// -- stack pointer
@@ -154,7 +149,7 @@ module chipmunk
 	end
 
 	// -- Adder/subtractor
-	wire [7:0] aluLeft = aluUseX ? xReg : (aluUseY ? yReg : (OpIncDecMem ? 8'h00 : aReg));
+	wire [7:0] aluLeft = aluUseX ? xReg : (aluUseY ? yReg : aReg);
 	assign { addSubCarryOut, addSubResult } = 
 		OpAdderUseCarry ? (OpSubtractInstead ? // carry
 			aluLeft + {1'b0, ~dataReg[7:0]} + cFlagReg
@@ -218,7 +213,7 @@ module chipmunk
 		if (state == `sDoInstruction) begin
 			if (opcode[5:1] == 5'b00011) // CLC, SEC
 				cFlagReg <= opcode[0];
-			else if (OpUseAdder || OpDoCompare || OpIncDec || OpInxDex || OpInyDey || OpIncDecMem) begin // add/subtract and increments/decrements all use the adder
+			else if (OpUseAdder || OpDoCompare || OpIncDec || OpInxDex || OpInyDey) begin // add/subtract and increments/decrements all use the adder
 				nFlagReg <= addSubResult[7];
 				zFlagReg <= (addSubResult == 8'b00000000) ? 1 : 0;
 				if (OpUseAdder || OpDoCompare) // increment/decrement doesn't affect carry
@@ -230,7 +225,7 @@ module chipmunk
 				nFlagReg <= shifterResult[7];
 				zFlagReg <= (shifterResult == 8'b00000000) ? 1 : 0;
 				cFlagReg <= shifterCarry;
-			end else if(OpLoadA || OpLoadX || OpLoadY) begin
+			end else if(OpLoadA || OpLoadX || OpLoadY || OpIncDecMem) begin
 				nFlagReg <= dataReg[7];
 				zFlagReg <= (dataReg == 8'b00000000) ? 1 : 0;
 			end
@@ -284,7 +279,7 @@ module chipmunk
 		else if (state == `sDoInstruction && OpRolRorMem) // ROL/ROR
 			dataBusOutput <= shifterResult;
 		else if (state == `sDoInstruction && OpIncDecMem) // INC/DEC
-			dataBusOutput <= addSubResult;
+			dataBusOutput <= dataReg;
 		else if (state == `sPushByte) // figure out what byte to push
 			dataBusOutput <= (opcode[2:1] == 2'b00) ? {1'b0, 1'b0, 1'b0, 1'b0, 1'b0, nFlagReg, zFlagReg, cFlagReg} :
 			                 (opcode[2:1] == 2'b01) ? aReg :
