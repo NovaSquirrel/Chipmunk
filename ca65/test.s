@@ -123,13 +123,15 @@
   cmp #$ed
   PassIfEqual
 
-; TEST SEVEN: ADX and SBX and SWAPAX
+; TEST SEVEN: ADX and SBX, SWAPAX and push/pull
   lda #
   ldx #
   adx #10
   sbx #5
   swapax
-  cmp #5
+  pha
+  ply
+  cpy #5
   PassIfEqual
 
 ; TEST EIGHT: Subroutines
