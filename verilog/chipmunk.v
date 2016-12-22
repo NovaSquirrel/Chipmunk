@@ -51,19 +51,19 @@ module chipmunk
 	wire shifterCarry;
 	wire [7:0] bitOperationResult; // XOR and NOR
 
-	wire OpLoadA		= opcode[5:1] == 5'b00000;
-	wire OpLoadX		= opcode[5:1] == 5'b00001;
-	wire OpLoadY		= opcode[5:1] == 5'b00010;
-	wire OpIncDecMem	= opcode[5:2] == 4'b0111 && opcode[0];
-	wire OpRolRorMem	= (opcode == 6'b011001 || opcode == 6'b011011);
-	wire OpIncDec		= opcode[5:1] == 5'b10101;
-	wire OpInxDex		= opcode[5:1] == 5'b10110;
-	wire OpInyDey		= opcode[5:1] == 5'b10111;
-	wire OpSta			= opcode == 6'b100001;
-	wire OpStx			= opcode == 6'b100011;
-	wire OpSty			= opcode == 6'b100101;
-	wire OpLdaY			= opcode == 6'b101000;
-	wire OpStaY			= opcode == 6'b101001;
+	wire OpLoadA         = opcode[5:1] == 5'b00000;
+	wire OpLoadX         = opcode[5:1] == 5'b00001;
+	wire OpLoadY         = opcode[5:1] == 5'b00010;
+	wire OpIncDecMem     = opcode[5:2] == 4'b0111 && opcode[0];
+	wire OpRolRorMem     = (opcode == 6'b011001 || opcode == 6'b011011);
+	wire OpIncDec        = opcode[5:1] == 5'b10101;
+	wire OpInxDex        = opcode[5:1] == 5'b10110;
+	wire OpInyDey        = opcode[5:1] == 5'b10111;
+	wire OpSta           = opcode == 6'b100001;
+	wire OpStx           = opcode == 6'b100011;
+	wire OpSty           = opcode == 6'b100101;
+	wire OpLdaY          = opcode == 6'b101000;
+	wire OpStaY          = opcode == 6'b101001;
 	wire OpIndexY        = opcode[5:1] == 5'b10100; // lda memory,y and sta memory,y
 	wire OpSetCarryFlag  = opcode[5:1] == 5'b00011;
 	wire OpUseAdder      = opcode[5:3] == 3'b001;

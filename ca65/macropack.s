@@ -41,8 +41,16 @@ PARAM_16BITX = %11
 .endmacro
 
 .macro lda mem, index
+  .local @argvalue, @lpar, @rpar
+  @lpar = .match (.left (1, {mem}), {(})
+  @rpar = .match (.right (1, {mem}), {)})
+
   .if(.xmatch (index, y))
-    .byt ($28 << 2) | PARAM_16BIT, <mem, >mem
+    .if @lpar && @rpar
+      .byt ($28 << 2) | PARAM_8BIT, mem
+    .else
+      .byt ($28 << 2) | PARAM_16BIT, <mem, >mem
+    .endif
   .else
     ImmOrMemInstruction $00, mem, index
   .endif
@@ -57,8 +65,16 @@ PARAM_16BITX = %11
 .endmacro
 
 .macro sta mem, index
+  .local @argvalue, @lpar, @rpar
+  @lpar = .match (.left (1, {mem}), {(})
+  @rpar = .match (.right (1, {mem}), {)})
+
   .if(.xmatch ({index}, y))
-    .byt ($29 << 2) | PARAM_16BIT, <mem, >mem
+    .if @lpar && @rpar
+      .byt ($29 << 2) | PARAM_8BIT, mem
+    .else
+      .byt ($29 << 2) | PARAM_16BIT, <mem, >mem
+    .endif
   .else
     MemoryInstruction $21, mem, index
   .endif
@@ -129,7 +145,7 @@ PARAM_16BITX = %11
   .if (.tcount(value) = 1)
     .byt ($1c << 2) | PARAM_NONE
   .else
-    @argvalue = .right(.tcount(value)-1, arg)
+    @argvalue = .right(.tcount(value)-1, value)
     .byt ($1c << 2) | PARAM_8BIT, @argvalue
   .endif
 .endmacro

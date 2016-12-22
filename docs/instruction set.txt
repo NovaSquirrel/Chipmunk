@@ -52,7 +52,7 @@ No page crossing penalty.
 +2 cycles
 +1 byte
 
-OP pointer
+OP (pointer),y
 Same as 6502's (zeropage),y addressing mode
 No page crossing penalty.
 +5 cycles
@@ -66,7 +66,7 @@ LDA zeropage
 LDA absolute
 LDA absolute,x
 LDA absolute,y
-LDAP pointer
+LDA (pointer),y
 Load the accumulator with a new value
 Flags: NZ
 
@@ -93,7 +93,7 @@ STA zeropage
 STA absolute
 STA absolute,x
 STA absolute,y
-STAP pointer
+STA (pointer),y
 Store the accumulator to memory
 
 STX
