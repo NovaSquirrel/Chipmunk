@@ -1,0 +1,45 @@
+Chipmunk is a minimized 6502 so it's missing some features, and there are some new ones that weren't available on the 6502.
+
+Missing opcodes
+  * ORA         (available as a macro)
+  * AND         (available as a macro for constants only)
+  * TAY/TAY     (available as a macro)
+  * CLI/SEI/RTI (no interrupts)
+  * TXS/TSX
+  * CLV/BVC/BVS (no overflow flag)
+  * BRK
+  * SED/CLD     (no decimal mode)
+
+New opcodes (compared to NMOS 6502)
+  * SWAPAX  - swap the values of A and X (SWAPAY and SWAPXY available as macros)
+  * BIC     - (macro) accumulator = accumulator & ~value
+  * NEG     - (macro) accumulator = -accumulator
+  * NOT     - accumulator = ~accumulator
+  * ADD     - add without carry
+  * SUB     - subtract without carry
+  * INA     - increment accumulator
+  * DEA     - decrement accumulator
+  * NOR     - accumulator = ~(accumulator | value)
+  * BRA     - branch always
+  * BSR     - call subroutine, but relative
+  * JEQ/JNE - jump if equal/not equal
+  * JCS/JCC - jump if carry set/unset
+  * JMI/JPL - jump if negative/positive
+  * ADX/SBX - add and subtract constants from the X register
+  * ADY/SBY - add and subtract constants from the Y register
+  * PHX/PLX - push/pull X register
+  * PHY/PLY - push/pull Y register
+
+Missing address modes
+  * Zeropage, x
+  * (Zeropage, x)
+  * Absolute, Y   (except for LDA/STA)
+  * (Zeropage), y (except for LDA/STA)
+
+* 6-bit stack pointer, though that can be changed.
+* If an address or constant is zero, it takes no space to store.
+* No page crossing penalties.
+* Branches can take a 16-bit parameter instead and act as a jump.
+* ASL/LSR only work on the accumulator.
+* ROL/ROR only work on memory.
+* TAX/TXA don't affect flags.
