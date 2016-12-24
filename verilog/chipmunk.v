@@ -101,7 +101,7 @@ module chipmunk
 	wire BranchTaken     = OpBranch && flagsMatch;
 
 	// -- set the finished bit to 1 when you try to RTS with a full stack
-	always @(posedge clk or negedge reset) begin
+	always @(posedge clk) begin
 		if (!reset)
 			finished <= 0;
 		else if(state == `sFetchInstruction && dataBus == 8'h83) // NOP absolute,x is halt
@@ -109,7 +109,7 @@ module chipmunk
 	end
 
 	// -- advance the current state to the next state
-	always @(posedge clk or negedge reset) begin
+	always @(posedge clk) begin
 		if (!reset)
 			state <= `sFetchInstruction;
 		else 
@@ -143,7 +143,7 @@ module chipmunk
 
 	// -- stack pointer
 	// can increment or decrement
-	always @(posedge clk or negedge reset) begin
+	always @(posedge clk) begin
 		if (!reset)
 			spReg <= 6'b111111;
 		else if (state == `sReturn1 ||
@@ -245,7 +245,7 @@ module chipmunk
 
 	// -- program counter
 	// can increment or load
-	always @(posedge clk or negedge reset) begin
+	always @(posedge clk) begin
 		if (!reset)
 			pcReg <= startPC; 
 		else if(state == `sFetchInstruction || state == `sFetchParameterLo || state == `sFetchParameterHi)
