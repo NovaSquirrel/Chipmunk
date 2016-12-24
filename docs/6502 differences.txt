@@ -29,6 +29,7 @@ New opcodes (compared to NMOS 6502)
   * ADY/SBY - add and subtract constants from the Y register
   * PHX/PLX - push/pull X register
   * PHY/PLY - push/pull Y register
+  * HALT    - stops the coprocessor, signals that it's done
 
 Missing address modes
   * Zeropage, x
