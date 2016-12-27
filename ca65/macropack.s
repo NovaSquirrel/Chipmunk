@@ -332,11 +332,11 @@ PARAM_16BITX = %11
 .endmacro
 
 .macro and mem
-  .assert (.match (.left (1, {value}), #)), error, "AND only supports constants"
+  .assert (.match (.left (1, {mem}), #)), error, "AND only supports constants"
 
   .local @argvalue
-  @argvalue = .right(.tcount(value)-1, arg)
-  bic #<~mem
+  @argvalue = .right(.tcount(mem)-1, mem)
+  bic #<~@argvalue
 .endmacro
 
 .macro BranchInstruction opcode, target
