@@ -1,6 +1,7 @@
 Chipmunk is a minimized 6502 so it's missing some features, and there are some new ones that weren't available on the 6502.
 
 Missing opcodes
+  * BIT
   * ORA         (available as a macro)
   * AND         (available as a macro for constants only)
   * TAY/TAY     (available as a macro)
