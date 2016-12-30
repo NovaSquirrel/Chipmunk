@@ -87,11 +87,11 @@ module chipmunk
 	wire OpSubtractInstead = OpDoCompare ||                          // compares
 	                         (opcode[5:3] == 3'b001 && opcode[1]) || // SUB or SBC
 	                         (opcode[5:3] == 3'b101 && opcode[0]);   // decrements 
-							// note that memory DEC is absent from here
+							// note that memory DEC is absent from here as it doesn't use the ALU
 	wire aluUseX         = OpCpx || OpInxDex;
 	wire aluUseY         = OpCpy || OpInyDey;
 
-	reg OpReadMemory;
+	reg OpReadMemory; // register that holds the results of OpReadMemory2
 	wire OpReadMemory2   = dataBus[2] && !dataBus[7] && dataBus[7:2] != 6'b000111; // dataBus version
 
 	wire OpBranch        = opcode[5:3] == 3'b111; //last 8 opcodes are branches
@@ -100,7 +100,7 @@ module chipmunk
                                          || (opcode[1] && (opcode[0] == cFlagReg)))); // BCS/BCC
 	wire BranchTaken     = OpBranch && flagsMatch;
 
-	// -- set the finished bit to 1 when you try to RTS with a full stack
+	// -- set the finished bit to 1 when HALT is executed
 	always @(posedge clk) begin
 		if (!reset)
 			finished <= 0;
@@ -221,7 +221,7 @@ module chipmunk
 	// -- flags registers
 	always @(posedge clk) begin
 		if (state == `sDoInstruction) begin
-			if (opcode[5:1] == 5'b00011) // CLC, SEC
+			if (OpSetCarryFlag) // CLC, SEC
 				cFlagReg <= opcode[0];
 			else if (OpUseAdder || OpDoCompare || OpIncDec || OpInxDex || OpInyDey) begin // add/subtract and increments/decrements all use the adder
 				nFlagReg <= addSubResult[7];
