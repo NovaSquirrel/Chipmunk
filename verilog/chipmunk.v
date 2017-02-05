@@ -151,11 +151,9 @@ module chipmunk
 					((dataBus[7:5] == 3'b110 && dataBus[2]) // pla, plx, ply, plp
 					|| (dataBus[7:2] == 6'b100111)) // rts
 				))
-			spReg <= spReg + 1'b1;
-		else if (state == `sPushByte ||
-		         state == `sCall1 ||
-		         state == `sCall2)
-			spReg <= spReg - 1'b1;
+			spReg <= spReg + 1'b1; // pull a byte from the stack
+		else if (state == `sPushByte || state == `sCall1 || state == `sCall2)
+			spReg <= spReg - 1'b1; // push a byte to the stack
 	end
 
 	// -- Adder/subtractor
@@ -270,9 +268,9 @@ module chipmunk
 			`sFetchInstruction, `sFetchParameterLo, `sFetchParameterHi: // read parameter parts
 				addrBus <= pcReg;
 			`sPointerGet1:
-				addrBus <= {{4{1'b0}}, dataReg};
+				addrBus <= {{(addrSize-8){1'b0}}, dataReg};
 			`sPointerGet2:
-				addrBus <= {{4{1'b0}}, dataRegPlus};
+				addrBus <= {{(addrSize-8){1'b0}}, dataRegPlus};
 			default:
 				addrBus <= {{addrSize}{1'bx}};
 		endcase
